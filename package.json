@@ -1,0 +1,9 @@
+{
+  "name": "matchday-desk",
+  "version": "1.0.0",
+  "description": "Multi-user football predictions: shared picks, personal trackers and bankrolls",
+  "main": "server.js",
+  "scripts": { "start": "node server.js", "test": "node test.js" },
+  "engines": { "node": ">=18" },
+  "dependencies": { "pg": "^8.11.3" }
+}
