@@ -9,7 +9,7 @@ const { openStore } = require('./store');
 const E = require('./engine');
 
 const scrypt = promisify(crypto.scrypt);
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8000;
 const IS_PROD = process.env.NODE_ENV === 'production';
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
 const TRUST_PROXY = process.env.TRUST_PROXY === '1';
