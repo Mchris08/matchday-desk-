@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Matchday Desk</title>
+<style>
+:root{
+  --bg:#E8EDEF;--paper:#FBFBF6;--ink:#10202E;--mute:#58697A;--line:#C7D2D9;--chip:#DCE5E8;
+  --green:#0F7A55;--amber:#A86F00;--red:#B83227;--onacc:#fff;
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0B131B;--paper:#15212D;--ink:#E7EEF3;--mute:#93A4B1;--line:#2A3B4A;--chip:#1E2D3B;
+    --green:#38C994;--amber:#F0B429;--red:#F2705F;--onacc:#06251A}
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:84px}
+h1,h2,h3,.disp{font-family:Bahnschrift,"DIN Alternate","Franklin Gothic Medium","Arial Narrow",system-ui,sans-serif;font-weight:700}
+.wrap{max-width:780px;margin:0 auto;padding:0 14px}
+.top{background:var(--ink);color:var(--bg)}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:12px;padding-bottom:12px}
+.top h1{margin:0;font-size:22px;letter-spacing:.3px}
+.top p{margin:2px 0 0;font-size:12.5px;opacity:.8}
+.btn{font:inherit;font-weight:600;padding:9px 14px;border:1.5px solid var(--ink);background:var(--paper);color:var(--ink);border-radius:3px;cursor:pointer}
+.btn:hover{background:var(--chip)}
+.btn.pri{background:var(--green);border-color:var(--green);color:var(--onacc)}
+.btn.sm{padding:5px 10px;font-size:13px}
+.btn.danger{color:var(--red);border-color:var(--red)}
+.top .btn{border-color:var(--bg);background:transparent;color:var(--bg);white-space:nowrap}
+.top .btn:hover{background:rgba(255,255,255,.12)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--paper);border-top:1.5px solid var(--ink);display:flex;z-index:5}
+nav button{flex:1;font:inherit;font-weight:600;background:none;border:0;padding:14px 4px;color:var(--mute);cursor:pointer;border-top:4px solid transparent;margin-top:-1.5px}
+nav button[aria-current=true]{color:var(--ink);border-top-color:var(--green)}
+@media(min-width:760px){
+  body{padding-bottom:30px}
+  nav{position:sticky;top:0;bottom:auto;border-top:0;border-bottom:1.5px solid var(--ink)}
+  nav button{border-top:0;border-bottom:4px solid transparent;margin:0 0 -1.5px}
+  nav button[aria-current=true]{border-bottom-color:var(--green)}
+}
+main{padding-top:18px}
+.lead{margin:0 0 18px;color:var(--mute)}
+.note{border-left:4px solid var(--amber);background:var(--paper);padding:10px 12px;margin:0 0 18px;font-size:14px}
+.note.ok{border-color:var(--green)}
+.note.bad{border-color:var(--red)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 16px}
+.card{background:var(--paper);border:1.5px solid var(--ink);padding:14px 16px;margin:0 0 18px}
+.card h3{margin:0 0 8px;font-size:19px}
+
+/* slips */
+.slip{background:var(--paper);border:1.5px solid var(--ink);margin:0 0 28px;position:relative}
+.slip-h{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;padding:14px 16px 12px}
+.slip-h h2{margin:0;font-size:28px;line-height:1}
+.slip-h p{margin:5px 0 0;color:var(--mute);font-size:13px}
+.tot{text-align:right;flex:none}
+.tot b{display:block;font-family:Bahnschrift,"DIN Alternate","Franklin Gothic Medium","Arial Narrow",system-ui,sans-serif;font-size:42px;line-height:.9;font-variant-numeric:tabular-nums}
+.tot span{font-size:12px;color:var(--mute)}
+.perf{position:relative;border-top:2px dashed var(--line);margin:2px 0 0}
+.perf:before,.perf:after{content:"";position:absolute;top:-11px;width:22px;height:22px;border-radius:50%;background:var(--bg);border:1.5px solid var(--ink)}
+.perf:before{left:-12px;clip-path:inset(0 0 0 50%)}
+.perf:after{right:-12px;clip-path:inset(0 50% 0 0)}
+.day{padding:6px 16px;background:var(--chip);font-weight:700;font-size:13px}
+.leg{display:grid;grid-template-columns:46px 1fr 92px;gap:1px 10px;padding:10px 16px;border-bottom:1px solid var(--line);align-items:center}
+.leg .when{grid-row:1/3;font-variant-numeric:tabular-nums;color:var(--mute);font-size:13px}
+.leg .m{font-weight:600}
+.leg .m small{font-weight:400;color:var(--mute);margin-left:6px}
+.leg .pk{font-size:14px}
+.leg .pk b{margin-left:6px;font-variant-numeric:tabular-nums}
+.leg .od{grid-column:3;grid-row:1/3;text-align:right}
+.leg .od input{width:76px;font:inherit;font-weight:700;font-variant-numeric:tabular-nums;text-align:right;padding:6px 6px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);border-radius:3px}
+.leg .od small{display:block;font-size:11.5px;color:var(--mute);margin-top:2px}
+.leg .od small.pos{color:var(--green)}.leg .od small.neg{color:var(--red)}
+.stats{display:grid;grid-template-columns:1.4fr 1fr 1fr;border-top:1.5px solid var(--ink)}
+.stats>div{padding:12px 16px}
+.stats>div+div{border-left:1px solid var(--line)}
+.stats b{display:block;font-size:22px;font-family:Bahnschrift,"DIN Alternate","Franklin Gothic Medium","Arial Narrow",system-ui,sans-serif;font-variant-numeric:tabular-nums}
+.stats span{font-size:12.5px;color:var(--mute)}
+.meter{height:7px;background:var(--chip);margin-top:7px}
+.meter i{display:block;height:100%;background:var(--green)}
+.risk-hi{color:var(--red)}.risk-mid{color:var(--amber)}.risk-lo{color:var(--green)}
+.slip-f{display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px;border-top:1px solid var(--line);align-items:center}
+.slip-f .flag{margin-left:auto;font-size:13px;font-weight:600}
+.empty{padding:18px 16px;color:var(--mute)}
+@media(max-width:480px){.stats{grid-template-columns:1fr 1fr}.stats>div:first-child{grid-column:1/3;border-bottom:1px solid var(--line)}.stats>div+div{border-left:0}.stats>div:nth-child(3){border-left:1px solid var(--line)}.tot b{font-size:36px}}
+
+/* fixtures */
+.fx{display:grid;grid-template-columns:46px 1fr;gap:2px 10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.fx .when{color:var(--mute);font-size:13px;font-variant-numeric:tabular-nums}
+.fx .teams{font-weight:600}
+.fx .teams small{color:var(--mute);font-weight:400;margin-left:6px}
+.dots{display:inline-flex;gap:2px;margin-left:6px;vertical-align:middle}
+.dots i{width:14px;height:14px;font:700 9px/14px system-ui;font-style:normal;text-align:center;color:#fff;border-radius:2px}
+.dots .W{background:var(--green);color:var(--onacc)}.dots .D{background:#7C8B97}.dots .L{background:var(--red)}
+.hda{display:flex;height:8px;margin:5px 0 3px;grid-column:2}
+.hda i{display:block;height:100%}
+.hda .h{background:var(--green)}.hda .d{background:#7C8B97}.hda .a{background:var(--amber)}
+.fx .tp{grid-column:2;font-size:13.5px;color:var(--mute)}
+.fx .tp b{color:var(--ink)}
+h3.dayh{margin:20px 0 0;padding-bottom:6px;border-bottom:1.5px solid var(--ink);font-size:17px}
+
+/* forms */
+label.f{display:block;margin:0 0 12px;font-weight:600;font-size:14px}
+label.f small{display:block;font-weight:400;color:var(--mute)}
+input[type=text],input[type=password],input[type=number],select{font:inherit;width:100%;padding:9px 10px;border:1.5px solid var(--ink);background:var(--bg);color:var(--ink);border-radius:3px;margin-top:4px}
+input[type=range]{width:100%;margin-top:6px;accent-color:var(--green)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
+.checks label{font-weight:400;display:flex;gap:8px;align-items:center}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+th{font-weight:700;color:var(--mute);font-size:12.5px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:0 0 18px}
+.kpis div{background:var(--paper);border:1.5px solid var(--ink);padding:10px 12px}
+.kpis b{display:block;font-size:24px;font-family:Bahnschrift,"DIN Alternate","Franklin Gothic Medium","Arial Narrow",system-ui,sans-serif}
+.kpis span{font-size:12.5px;color:var(--mute)}
+.res{font-weight:700;font-size:12.5px;margin-left:6px}
+.res.won{color:var(--green)}.res.lost{color:var(--red)}
+.tag{display:inline-block;font-size:12px;font-weight:700;padding:2px 7px;background:var(--chip);border-radius:3px;margin-left:6px}
+footer{max-width:780px;margin:10px auto 0;padding:0 14px 20px;color:var(--mute);font-size:12.5px}
+
+.top .btn[hidden]{display:none}
+.tag{white-space:nowrap}
+@media(max-width:420px){nav button{font-size:13px;padding:14px 2px}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <div><h1>Matchday Desk</h1><p id="status">Free football predictions</p></div>
+  <button class="btn" id="who" data-act="logout" style="display:none">Sign out</button>
+</div></header>
+<nav id="nav" aria-label="Sections" style="display:none"></nav>
+<div class="wrap"><main id="view"></main></div>
+<footer>Win chances are model estimates, not guarantees. Odds shown are estimates because there is no bookmaker feed: type your bookmaker's real price into any leg and the numbers update. Only stake what you can afford to lose. Must be 18 or older to bet.</footer>
+<script>
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const pct=(p,d=0)=>(p*100).toFixed(d)+'%';
+const fmtTime=ts=>{const d=new Date(ts);return pad(d.getHours())+':'+pad(d.getMinutes())};
+const fmtDay=k=>{const [y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d).toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'short'})};
+const dayOf=ts=>{const d=new Date(ts);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
+const SECN={weekly:{name:'Weekly',blurb:'Whole week, at most 2 games per day'},normal:{name:'Normal',blurb:'Settles within 4 days'},daily:{name:'Daily',blurb:'Settles in 1 to 2 days'}};
+const S={user:null,tab:'picks',meta:null,fixtures:[],slips:{},tickets:[],admin:null,fLeague:'all',mode:'login',err:'',pollT:null};
+
+async function api(path,opts={}){
+  const r=await fetch('/api'+path,{method:opts.method||'GET',credentials:'same-origin',
+    headers:{'Content-Type':'application/json','X-Requested-With':'matchday'},body:opts.body?JSON.stringify(opts.body):undefined});
+  let j={};try{j=await r.json()}catch(e){}
+  if(!r.ok){
+    if(r.status===401&&S.user){S.user=null;render()}
+    const e=new Error(j.error||('Server error ('+r.status+'). Check the server logs.'));e.status=r.status;throw e;
+  }
+  return j;
+}
+let toastT;
+function toast(msg){
+  let t=$('#toast');
+  if(!t){t=document.createElement('div');t.id='toast';t.setAttribute('role','status');
+    t.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:90px;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:3px;max-width:90vw;z-index:9;font-size:14px';
+    document.body.appendChild(t)}
+  t.textContent=msg;t.style.display='block';clearTimeout(toastT);toastT=setTimeout(()=>t.style.display='none',5000);
+}
+const guard=fn=>async(...a)=>{try{await fn(...a)}catch(e){toast(e.message)}};
+
+/* ---------- data loading ---------- */
+async function loadBoard(){
+  const j=await api('/board');S.meta=j.meta;S.fixtures=j.fixtures;S.slips=j.slips;
+  clearTimeout(S.pollT);
+  if(S.meta.busy)S.pollT=setTimeout(guard(async()=>{await loadBoard();if(S.tab==='admin')await loadAdmin();render()}),3500);
+}
+async function loadTickets(){S.tickets=(await api('/tickets')).tickets}
+async function loadAdmin(){S.admin=await api('/admin/overview')}
+async function enter(){await Promise.all([loadBoard(),loadTickets()])}
+
+/* ---------- totals ---------- */
+function totals(t){const odds=t.legs.reduce((a,l)=>a*l.odds,1),pj=t.legs.reduce((a,l)=>a*l.p,1);return {odds,pj,ev:pj*odds-1}}
+const riskOf=pj=>pj>=.35?['Moderate risk','risk-mid']:pj>=.12?['High risk','risk-hi']:pj>=.03?['Very high risk','risk-hi']:['Long shot','risk-hi'];
+
+/* ---------- views ---------- */
+function updateStatus(){
+  let s='Free football predictions';
+  if(S.user&&S.meta){
+    if(S.meta.busy)s=S.meta.busy+'...';
+    else if(!S.meta.updatedAt)s='Waiting for the first fixtures update';
+    else{const h=Math.round((Date.now()-S.meta.updatedAt)/36e5*10)/10;
+      s=(S.meta.demo?'Demo data (made up)':'Live data')+', updated '+(h<.1?'just now':h+' h ago')+', '+S.fixtures.length+' fixtures analysed'}
+  }
+  $('#status').textContent=s;
+  $('#who').style.display=S.user?'':'none';
+}
+function renderNav(){
+  if(!S.user){$('#nav').innerHTML='';$('#nav').style.display='none';return}
+  $('#nav').style.display='';
+  const tabs=[['picks','Picks'],['fixtures','Fixtures'],['tracker','Tracker'],['bankroll','Bankroll'],['account','Account']];
+  if(S.user.role==='admin')tabs.push(['admin','Admin']);
+  $('#nav').innerHTML=tabs.map(([k,n])=>`<button data-tab="${k}" aria-current="${S.tab===k}">${n}</button>`).join('');
+}
+function viewAuth(){
+  const su=S.mode==='signup';
+  return `<div class="card" style="max-width:420px;margin:10px auto"><h3>${su?'Create your free account':'Sign in'}</h3>
+    <p style="margin-top:0;color:var(--mute)">${su?'Get daily, normal and weekly football slips, plus a tracker and bankroll that are saved to your account.':'Welcome back.'}</p>
+    ${S.err?`<div class="note bad" role="alert">${esc(S.err)}</div>`:''}
+    <label class="f">Email<input id="em" type="text" inputmode="email" autocomplete="email" autocapitalize="off"></label>
+    <label class="f">Password${su?'<small>At least 8 characters.</small>':''}<input id="pw" type="password" autocomplete="${su?'new-password':'current-password'}"></label>
+    <div class="row"><button class="btn pri" data-act="auth">${su?'Create account':'Sign in'}</button>
+    <button class="btn" data-act="mode">${su?'I already have an account':'Create a free account'}</button></div></div>`;
+}
+function slipHTML(key){
+  const t=S.slips[key],sec=SECN[key];
+  if(!t)return '';
+  if(!t.ok)return `<section class="slip"><div class="slip-h"><div><h2>${sec.name}</h2><p>${sec.blurb}. Target odds ${t.lo} to ${t.hi}.</p></div></div><div class="perf"></div><div class="empty">${esc(t.why)}</div></section>`;
+  const {odds,pj,ev}=totals(t),[risk,rc]=riskOf(pj),lo=t.lo,hi=t.hi;
+  const days=[...new Set(t.legs.map(l=>l.day))];
+  let body='';
+  for(const d of days){
+    body+=`<div class="day">${fmtDay(d)}</div>`;
+    t.legs.forEach((l,i)=>{
+      if(l.day!==d)return;
+      const edge=l.p*l.odds-1;
+      body+=`<div class="leg"><div class="when">${fmtTime(l.ts)}</div>
+        <div class="m">${esc(l.home)} v ${esc(l.away)}<small>${esc(l.comp)}</small></div>
+        <div class="od"><input type="number" inputmode="decimal" step="0.01" min="1.01" value="${l.odds.toFixed(2)}" data-leg="${key}:${i}" aria-label="Odds for ${esc(l.label)}"><small class="${edge>=0?'pos':'neg'}">edge ${edge>=0?'+':''}${(edge*100).toFixed(0)}%</small></div>
+        <div class="pk">${esc(l.label)}<b>${pct(l.p)}</b></div></div>`;
+    });
+  }
+  const flag=odds>hi?`<span class="flag risk-hi">Above the ${hi} cap</span>`:odds<lo?`<span class="flag risk-mid">Below the ${lo} target</span>`:`<span class="flag risk-lo">Inside target range</span>`;
+  const minP=S.meta?S.meta.minProb:62;
+  return `<section class="slip">
+    <div class="slip-h"><div><h2>${sec.name}</h2><p>${t.legs.length} legs over ${days.length} day${days.length>1?'s':''}. ${sec.blurb}.</p></div>
+      <div class="tot"><b>${odds.toFixed(2)}</b><span>total odds</span></div></div>
+    <div class="perf"></div>${body}
+    ${t.floor<minP?`<div class="note" style="margin:0;border-left-width:0;border-top:1px solid var(--line)">The ${minP}% leg floor could not reach these odds, so this slip uses legs down to ${t.floor}%. That lowers the win chance shown below.</div>`:''}
+    <div class="stats">
+      <div><b>${pj>=.1?pct(pj,1):pct(pj,2)}</b><span>chance every leg wins</span><div class="meter"><i style="width:${Math.max(2,Math.min(100,pj*100))}%"></i></div></div>
+      <div><b>${ev>=0?'+':''}${ev.toFixed(2)}</b><span>expected return per 1 staked</span></div>
+      <div><b class="${rc}">${risk}</b><span>${pct(1-pj,pj>.9?1:0)} chance it loses</span></div>
+    </div>
+    <div class="slip-f"><button class="btn pri sm" data-act="track" data-k="${key}">Track this slip</button><button class="btn sm" data-act="copy" data-k="${key}">Copy</button>${flag}</div>
+  </section>`;
+}
+function viewPicks(){
+  if(!S.fixtures.length){
+    const adm=S.user.role==='admin';
+    return `<div class="card"><h3>${S.meta&&S.meta.busy?'Fixtures are loading':'No picks yet'}</h3>
+      <p>${adm?'Open the Admin tab, add your football-data.org key and press Update fixtures. You can also load demo data to test the site.':'The picks are being prepared. Check back in a little while.'}</p>
+      ${adm?'<button class="btn pri" data-tab="admin">Open admin</button>':''}</div>`;
+  }
+  const seen=[];let dup=false;
+  for(const k in S.slips){const t=S.slips[k];if(t&&t.ok)t.legs.forEach(l=>[l.home,l.away].forEach(n=>{if(seen.includes(n))dup=true;seen.push(n)}))}
+  const leagues=new Set(S.fixtures.map(x=>x.cn)).size;
+  return `<p class="lead">Built from ${S.fixtures.length} fixtures in ${leagues} league${leagues>1?'s':''}. Each slip shows the real chance that every leg wins, so you can see what you are risking.</p>
+    ${S.meta.demo?'<div class="note bad">These are made-up demo matches for testing, not real fixtures.</div>':''}
+    ${dup?'<div class="note bad">Some teams appear in more than one slip. The admin has turned team sharing on.</div>':'<div class="note ok">No team appears in more than one slip, and no team appears twice inside a slip.</div>'}
+    ${slipHTML('weekly')}${slipHTML('normal')}${slipHTML('daily')}`;
+}
+function viewFixtures(){
+  if(!S.fixtures.length)return `<div class="note">No fixtures yet.</div>`;
+  const comps=[...new Set(S.fixtures.map(x=>x.cn))];
+  const list=S.fixtures.filter(x=>S.fLeague==='all'||x.cn===S.fLeague);
+  let h=`<div class="row"><select data-f="fLeague" aria-label="League" style="max-width:260px;margin:0"><option value="all">All leagues</option>${comps.map(c=>`<option ${S.fLeague===c?'selected':''}>${esc(c)}</option>`).join('')}</select></div>`;
+  let cur='';
+  const dots=f=>`<span class="dots">${f.split('').map(x=>`<i class="${x}">${x}</i>`).join('')}</span>`;
+  for(const m of list){
+    const k=dayOf(m.d);
+    if(k!==cur){cur=k;h+=`<h3 class="dayh">${fmtDay(k)}</h3>`}
+    h+=`<div class="fx"><div class="when">${fmtTime(m.d)}</div>
+      <div class="teams">${esc(m.h)}${dots(m.fh)} v ${esc(m.a)}${dots(m.fa)}<small>${esc(m.cn)}</small></div>
+      <div class="hda" title="Home, draw, away"><i class="h" style="width:${m.pH*100}%"></i><i class="d" style="width:${m.pD*100}%"></i><i class="a" style="width:${m.pA*100}%"></i></div>
+      <div class="tp">Home ${pct(m.pH)}, draw ${pct(m.pD)}, away ${pct(m.pA)}. Safest market: <b>${esc(m.top.label)}</b> at ${pct(m.top.p)}</div></div>`;
+  }
+  return h;
+}
+function viewTracker(){
+  const T=S.tickets,sett=T.filter(t=>t.status!=='open'),c=S.user.bank.cur;
+  const won=sett.filter(t=>t.status==='won').length;
+  const staked=sett.reduce((a,t)=>a+t.stake,0);
+  const profit=sett.reduce((a,t)=>a+(t.status==='won'?t.stake*(t.odds-1):-t.stake),0);
+  const legs=T.flatMap(t=>t.legs).filter(l=>l.res);
+  const hit=legs.length?legs.filter(l=>l.res==='won').length/legs.length:0,pred=legs.length?legs.reduce((a,l)=>a+l.p,0)/legs.length:0;
+  let streak=0;for(const t of [...sett].sort((a,b)=>b.at-a.at)){if(t.status==='lost')streak++;else break}
+  let h=`<div class="kpis">
+    <div><b>${sett.length?pct(won/sett.length):'n/a'}</b><span>slip win rate (${won} of ${sett.length})</span></div>
+    <div><b class="${profit>=0?'risk-lo':'risk-hi'}">${profit>=0?'+':''}${esc(c)}${profit.toFixed(2)}</b><span>profit ${staked?'('+(profit/staked*100).toFixed(0)+'% of staked)':''}</span></div>
+    <div><b>${legs.length?pct(hit):'n/a'}</b><span>legs won; model expected ${legs.length?pct(pred):'n/a'}</span></div>
+    <div><b>${streak}</b><span>losing slips in a row</span></div></div>`;
+  if(!T.length)return h+`<div class="note">Nothing tracked yet. Press Track this slip on any slip. Results settle automatically after each fixtures update.</div>`;
+  if(streak>=3)h+=`<div class="note bad">You have lost ${streak} slips in a row. Stay on your planned stakes and do not chase losses with bigger bets.</div>`;
+  for(const t of T){
+    const cls=t.status==='won'?'risk-lo':t.status==='lost'?'risk-hi':'';
+    h+=`<div class="card"><div class="row" style="justify-content:space-between;margin:0 0 6px"><h3 style="margin:0">${esc(t.name)}<span class="tag">${t.odds.toFixed(2)} odds</span>${t.demo?'<span class="tag">Demo</span>':''}</h3><b class="${cls}">${t.status==='open'?'Open':t.status==='won'?'Won':'Lost'}</b></div>
+      <div style="color:var(--mute);font-size:13px;margin-bottom:8px">${new Date(t.at).toLocaleDateString()}, stake ${esc(c)}${t.stake.toFixed(2)}, win chance ${pct(t.pj,t.pj>.1?1:2)}</div>
+      ${t.legs.map(l=>`<div style="padding:4px 0;border-top:1px solid var(--line)">${esc(l.match)}: ${esc(l.label)} @ ${l.odds.toFixed(2)}${l.res?`<span class="res ${l.res}">${l.res==='won'?'Won':'Lost'}</span>`:''}</div>`).join('')}
+      <div class="row" style="margin:10px 0 0">${t.status==='open'?`<button class="btn sm" data-act="mark" data-id="${t.id}" data-r="won">Mark won</button><button class="btn sm" data-act="mark" data-id="${t.id}" data-r="lost">Mark lost</button>`:''}<button class="btn sm danger" data-act="del" data-id="${t.id}">Delete</button></div></div>`;
+  }
+  return h;
+}
+function viewBank(){
+  const b=S.user.bank,c=esc(b.cur);
+  const stake=k=>b.bankroll*b['s'+k]/100;
+  const worst=stake('Daily')+stake('Normal')+stake('Weekly');
+  let kt='';
+  for(const key of ['daily','normal','weekly']){
+    const t=S.slips[key];if(!t||!t.ok)continue;
+    const {odds,pj}=totals(t),f=(pj*odds-1)/(odds-1);
+    const sug=f>0?Math.min(f*b.kelly/100,.02)*b.bankroll:0;
+    kt+=`<tr><td>${SECN[key].name}</td><td>${odds.toFixed(2)}</td><td>${pct(pj,pj>.1?1:2)}</td><td>${pct(1/odds,pj>.1?1:2)}</td><td>${f>0?c+sug.toFixed(2):'No edge'}</td></tr>`;
+  }
+  const f=(k,l)=>`<label class="f">${l}<input type="number" inputmode="decimal" step="any" value="${b[k]}" data-b="${k}"></label>`;
+  return `<div class="card"><h3>Bankroll and stakes</h3>
+    <div class="grid2"><label class="f">Currency symbol<input type="text" value="${esc(b.cur)}" data-b="cur" maxlength="3"></label>${f('bankroll','Current bankroll')}</div>
+    <div class="grid2">${f('sDaily','Daily slip stake (% of bankroll)')}${f('sNormal','Normal slip stake (%)')}${f('sWeekly','Weekly slip stake (%)')}${f('kelly','Kelly fraction (%)')}</div>
+    <div class="grid2">${f('dayLoss','Daily loss limit (%)')}${f('weekLoss','Weekly loss limit (%)')}</div></div>
+    <div class="kpis"><div><b>${c}${stake('Daily').toFixed(2)}</b><span>Daily slip stake</span></div><div><b>${c}${stake('Normal').toFixed(2)}</b><span>Normal slip stake</span></div><div><b>${c}${stake('Weekly').toFixed(2)}</b><span>Weekly slip stake</span></div></div>
+    <div class="card"><h3>Your rules</h3>
+      <p>If all three slips lose you are down ${c}${worst.toFixed(2)} (${(worst/b.bankroll*100||0).toFixed(1)}% of bankroll).</p>
+      <p>Stop for the day once losses reach ${c}${(b.bankroll*b.dayLoss/100).toFixed(2)}. Stop for the week at ${c}${(b.bankroll*b.weekLoss/100).toFixed(2)}.</p>
+      <p>Never raise stakes to win back a loss. Update your bankroll after each settled slip.</p></div>
+    <div class="card"><h3>Kelly check on current slips</h3>
+      <p style="color:var(--mute);font-size:13.5px;margin-top:0">Kelly suggests a stake only when the model sees an edge over the odds you entered. It is capped at 2% of bankroll.</p>
+      ${kt?`<table><tr><th>Slip</th><th>Odds</th><th>Win chance</th><th>Break-even</th><th>Suggested stake</th></tr>${kt}</table>`:'<p>No slips available yet.</p>'}</div>`;
+}
+function viewAccount(){
+  return `<div class="card"><h3>Your account</h3><p style="margin-top:0">${esc(S.user.email)}${S.user.role==='admin'?'<span class="tag">Admin</span>':''}</p>
+    <button class="btn" data-act="logout">Sign out</button></div>
+  <div class="card"><h3>Change password</h3>
+    <label class="f">Current password<input id="pc" type="password" autocomplete="current-password"></label>
+    <label class="f">New password<small>At least 8 characters.</small><input id="pn" type="password" autocomplete="new-password"></label>
+    <button class="btn" data-act="chpw">Change password</button></div>
+  <div class="card"><h3>Delete account</h3><p style="margin-top:0">This removes your account and all tracked slips. It cannot be undone.</p>
+    <label class="f">Confirm with your password<input id="pd" type="password" autocomplete="current-password"></label>
+    <button class="btn danger" data-act="delacct">Delete my account</button></div>`;
+}
+function viewAdmin(){
+  const A=S.admin;
+  if(!A)return '<div class="note">Loading admin data...</div>';
+  const c=A.config,s=A.status;
+  const sl=(k,l,min,max,step,unit,help)=>`<label class="f">${l}: <span class="disp">${c[k]}${unit}</span><small>${help}</small><input type="range" min="${min}" max="${max}" step="${step}" value="${c[k]}" data-a="${k}"></label>`;
+  const rng=(k,mx)=>`<div class="grid2"><label class="f">${SECN[k].name} lowest odds<input type="number" step="1" min="1.5" value="${c.sec[k].lo}" data-a="sec.${k}.lo"></label><label class="f">${SECN[k].name} highest odds<input type="number" step="1" min="2" ${mx?`max="${mx}"`:''} value="${c.sec[k].hi}" data-a="sec.${k}.hi"></label></div>`;
+  return `<div class="kpis"><div><b>${A.users.length}</b><span>users</span></div><div><b>${s.fixtures}</b><span>fixtures analysed</span></div><div><b>${A.users.reduce((a,u)=>a+u.tickets,0)}</b><span>tracked slips</span></div></div>
+  <div class="card"><h3>Data</h3>
+    <p style="margin-top:0">${s.busy?esc(s.busy)+'...':s.updatedAt?(s.demo?'Demo data':'Live data')+', updated '+new Date(s.updatedAt).toLocaleString():'No data loaded yet.'}</p>
+    ${s.lastError?`<div class="note bad">${esc(s.lastError)}</div>`:''}
+    <div class="row"><button class="btn pri" data-act="adm" data-m="live" ${s.busy?'disabled':''}>Update fixtures</button><button class="btn" data-act="adm" data-m="rebuild" ${s.busy?'disabled':''}>Rebuild slips</button><button class="btn" data-act="adm" data-m="demo" ${s.busy?'disabled':''}>Load demo data</button></div>
+    <label class="f">football-data.org API key<small>${s.keyFromEnv?'Set through the server environment.':s.hasKey?'A key is saved. Paste a new one to replace it.':'Paste your free key. It is stored on the server and never shown to users.'}</small><input type="password" autocomplete="off" data-a="footballKey" placeholder="${s.hasKey?'Saved':''}"></label></div>
+  <div class="card"><h3>Leagues</h3><div class="checks">${A.leagues.map(([k,n])=>`<label><input type="checkbox" data-alg="${k}" ${c.leagues.includes(k)?'checked':''}>${n}</label>`).join('')}</div>
+    <p style="color:var(--mute);font-size:13.5px;margin-bottom:0">The free plan allows 10 requests a minute, so each league takes about 7 seconds to load.</p></div>
+  <div class="card"><h3>Pick quality</h3>
+    ${sl('minProb','Minimum win chance per leg',50,90,1,'%','Higher means safer legs but fewer slips can reach the odds targets.')}
+    ${sl('minGames','Minimum games played per team',3,15,1,'','Teams with less history are skipped.')}
+    ${sl('haircut','Safety haircut',0,10,1,'%','Shaves the model probability to avoid overconfidence.')}
+    ${sl('margin','Estimated bookmaker margin',0,12,1,'%','Used to estimate odds, since there is no bookmaker feed.')}
+    ${sl('refreshHours','Automatic update every',1,48,1,' h','How often the server refreshes live fixtures.')}
+    <label class="f">Lowest odds allowed for one leg<input type="number" step="0.01" min="1.01" value="${c.minOdds}" data-a="minOdds"></label>
+    <label class="f" style="display:flex;gap:8px;align-items:center;font-weight:400"><input type="checkbox" data-a="share" ${c.share?'checked':''}>Allow the same team in more than one slip (not recommended)</label></div>
+  <div class="card"><h3>Slip targets</h3>${rng('weekly',100)}${rng('normal')}${rng('daily')}<p style="color:var(--mute);font-size:13.5px;margin:0">Weekly slips are hard-capped at 100 odds and 2 games a day.</p></div>
+  <div class="card"><h3>Ads</h3>
+    <label class="f">Adsterra script URL<small>Paste only the address inside src="..." from your Adsterra code. Leave empty to turn ads off.</small><input type="text" autocomplete="off" autocapitalize="off" placeholder="https://..." value="${esc(c.adUrl||'')}" data-a="adUrl"></label>
+    <p style="color:var(--mute);font-size:13.5px;margin:0">The script loads on every page after you save. Reload the site to see it.</p></div>
+  <div class="card"><h3>Users</h3><table><tr><th>Email</th><th>Slips</th><th>Joined</th><th></th></tr>
+    ${A.users.map(u=>`<tr><td>${esc(u.email)}${u.role==='admin'?'<span class="tag">Admin</span>':''}${u.disabled?'<span class="tag">Disabled</span>':''}</td><td>${u.tickets}</td><td>${new Date(u.createdAt).toLocaleDateString()}</td>
+      <td>${u.id===S.user.id?'':`<button class="btn sm" data-act="udis" data-id="${u.id}" data-v="${u.disabled?'0':'1'}">${u.disabled?'Enable':'Disable'}</button> <button class="btn sm" data-act="urole" data-id="${u.id}" data-v="${u.role==='admin'?'user':'admin'}">${u.role==='admin'?'Remove admin':'Make admin'}</button>`}</td></tr>`).join('')}</table></div>`;
+}
+function render(){
+  renderNav();updateStatus();
+  let v;
+  if(!S.user)v=viewAuth;
+  else v={picks:viewPicks,fixtures:viewFixtures,tracker:viewTracker,bankroll:viewBank,account:viewAccount,admin:viewAdmin}[S.tab];
+  $('#view').innerHTML=v();
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click',guard(async e=>{
+  const tb=e.target.closest('[data-tab]');
+  if(tb){S.tab=tb.dataset.tab;if(S.tab==='admin')await loadAdmin();if(S.tab==='tracker')await loadTickets();render();window.scrollTo(0,0);return}
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const a=b.dataset.act,id=b.dataset.id;
+  if(a==='mode'){S.mode=S.mode==='login'?'signup':'login';S.err='';render()}
+  else if(a==='auth'){
+    try{const j=await api(S.mode==='signup'?'/signup':'/login',{method:'POST',body:{email:$('#em').value,password:$('#pw').value}});
+      S.user=j.user;S.err='';S.tab='picks';await enter();render()}
+    catch(err){S.err=err.message;render()}
+  }
+  else if(a==='logout'){await api('/logout',{method:'POST'});S.user=null;S.tickets=[];S.admin=null;S.mode='login';render()}
+  else if(a==='chpw'){await api('/me/password',{method:'POST',body:{current:$('#pc').value,next:$('#pn').value}});toast('Password changed.');render()}
+  else if(a==='delacct'){if(!confirm('Delete your account and all tracked slips?'))return;await api('/me/delete',{method:'POST',body:{password:$('#pd').value}});S.user=null;render()}
+  else if(a==='track'){
+    const k=b.dataset.k,t=S.slips[k],cap=k[0].toUpperCase()+k.slice(1),bk=S.user.bank;
+    await api('/tickets',{method:'POST',body:{key:k,legs:t.legs,stake:+(bk.bankroll*bk['s'+cap]/100).toFixed(2)}});
+    await loadTickets();toast('Slip saved to your Tracker.');
+  }
+  else if(a==='copy'){
+    const t=S.slips[b.dataset.k],{odds,pj}=totals(t);
+    const txt=SECN[b.dataset.k].name+' slip, total odds '+odds.toFixed(2)+'\n'+t.legs.map(l=>fmtDay(l.day)+' '+fmtTime(l.ts)+': '+l.home+' v '+l.away+', '+l.label+' @ '+l.odds.toFixed(2)).join('\n')+'\nChance every leg wins: '+pct(pj,2);
+    try{await navigator.clipboard.writeText(txt);toast('Slip copied.')}catch(err){toast('Copy was blocked by the browser.')}
+  }
+  else if(a==='mark'){await api('/tickets/'+id,{method:'PATCH',body:{status:b.dataset.r}});await loadTickets();render()}
+  else if(a==='del'){await api('/tickets/'+id,{method:'DELETE'});await loadTickets();render()}
+  else if(a==='adm'){
+    await api('/admin/refresh',{method:'POST',body:{mode:b.dataset.m}});
+    await Promise.all([loadBoard(),loadAdmin()]);render();
+    if(b.dataset.m==='live')toast('Update started. It takes about a minute.');
+  }
+  else if(a==='udis'){await api('/admin/users/'+id,{method:'POST',body:{disabled:b.dataset.v==='1'}});await loadAdmin();render()}
+  else if(a==='urole'){await api('/admin/users/'+id,{method:'POST',body:{role:b.dataset.v}});await loadAdmin();render()}
+}));
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&!S.user&&(e.target.id==='em'||e.target.id==='pw')){const b=document.querySelector('[data-act=auth]');if(b)b.click()}});
+document.addEventListener('change',guard(async e=>{
+  const el=e.target;
+  if(el.dataset.leg){const [k,i]=el.dataset.leg.split(':'),v=parseFloat(el.value);if(v>=1.01)S.slips[k].legs[+i].odds=v;render();return}
+  if(el.dataset.f){S[el.dataset.f]=el.value;render();return}
+  if(el.dataset.b){
+    const k=el.dataset.b;S.user.bank[k]=k==='cur'?el.value:(parseFloat(el.value)||0);
+    const j=await api('/bank',{method:'PUT',body:S.user.bank});S.user.bank=j.bank;render();return;
+  }
+  if(el.dataset.alg){
+    const c=S.admin.config;c.leagues=c.leagues.filter(x=>x!==el.dataset.alg);if(el.checked)c.leagues.push(el.dataset.alg);
+    await api('/admin/config',{method:'PUT',body:c});return;
+  }
+  if(el.dataset.a){
+    const c=S.admin.config,path=el.dataset.a.split('.'),body=JSON.parse(JSON.stringify(c));
+    if(path[0]==='footballKey'){
+      if(!el.value.trim())return;
+      body.footballKey=el.value.trim();
+    }else if(path[0]==='adUrl'){
+      body.adUrl=el.value.trim();
+    }else{
+      let o=body;for(let i=0;i<path.length-1;i++)o=o[path[i]];
+      const last=path[path.length-1];
+      o[last]=el.type==='checkbox'?el.checked:parseFloat(el.value);
+    }
+    await api('/admin/config',{method:'PUT',body});
+    await Promise.all([loadAdmin(),loadBoard()]);render();toast('Saved. Slips rebuilt.');
+  }
+}));
+document.addEventListener('input',e=>{
+  const el=e.target;
+  if(el.type==='range'&&el.dataset.a){const sp=el.closest('label').querySelector('.disp');if(sp){const u=sp.textContent.replace(/^[\d.]+/,'');sp.textContent=el.value+u}}
+});
+
+/* ---------- start ---------- */
+(async()=>{
+  try{const j=await api('/me');S.user=j.user;await enter()}catch(e){S.user=null}
+  render();
+})();
+setInterval(updateStatus,60000);
+
+</script>
+</body>
+</html>
