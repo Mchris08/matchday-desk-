@@ -356,6 +356,9 @@ function viewAdmin(){
     <label class="f">Lowest odds allowed for one leg<input type="number" step="0.01" min="1.01" value="${c.minOdds}" data-a="minOdds"></label>
     <label class="f" style="display:flex;gap:8px;align-items:center;font-weight:400"><input type="checkbox" data-a="share" ${c.share?'checked':''}>Allow the same team in more than one slip (not recommended)</label></div>
   <div class="card"><h3>Slip targets</h3>${rng('weekly',100)}${rng('normal')}${rng('daily')}<p style="color:var(--mute);font-size:13.5px;margin:0">Weekly slips are hard-capped at 100 odds and 2 games a day.</p></div>
+  <div class="card"><h3>Ads</h3>
+    <label class="f">Adsterra script URL<small>Paste only the address inside src="..." from your Adsterra code. Leave empty to turn ads off.</small><input type="text" autocomplete="off" autocapitalize="off" placeholder="https://..." value="${esc(c.adUrl||'')}" data-a="adUrl"></label>
+    <p style="color:var(--mute);font-size:13.5px;margin:0">The script loads on every page after you save. Reload the site to see it.</p></div>
   <div class="card"><h3>Users</h3><table><tr><th>Email</th><th>Slips</th><th>Joined</th><th></th></tr>
     ${A.users.map(u=>`<tr><td>${esc(u.email)}${u.role==='admin'?'<span class="tag">Admin</span>':''}${u.disabled?'<span class="tag">Disabled</span>':''}</td><td>${u.tickets}</td><td>${new Date(u.createdAt).toLocaleDateString()}</td>
       <td>${u.id===S.user.id?'':`<button class="btn sm" data-act="udis" data-id="${u.id}" data-v="${u.disabled?'0':'1'}">${u.disabled?'Enable':'Disable'}</button> <button class="btn sm" data-act="urole" data-id="${u.id}" data-v="${u.role==='admin'?'user':'admin'}">${u.role==='admin'?'Remove admin':'Make admin'}</button>`}</td></tr>`).join('')}</table></div>`;
@@ -421,6 +424,8 @@ document.addEventListener('change',guard(async e=>{
     if(path[0]==='footballKey'){
       if(!el.value.trim())return;
       body.footballKey=el.value.trim();
+    }else if(path[0]==='adUrl'){
+      body.adUrl=el.value.trim();
     }else{
       let o=body;for(let i=0;i<path.length-1;i++)o=o[path[i]];
       const last=path[path.length-1];
