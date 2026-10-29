@@ -9,7 +9,7 @@ const LEAGUES = [['PL', 'Premier League'], ['PD', 'La Liga'], ['SA', 'Serie A'],
 
 const DEF = {
   leagues: ['PL', 'PD', 'SA', 'BL1', 'FL1', 'DED', 'PPL', 'ELC'],
-  minProb: 62, minGames: 6, haircut: 3, margin: 6, minOdds: 1.15, share: false, refreshHours: 6,
+  minProb: 62, minGames: 6, haircut: 3, margin: 6, minOdds: 1.15, share: false, refreshHours: 6, adUrl: '',
   sec: { daily: { lo: 5, hi: 10 }, normal: { lo: 20, hi: 30 }, weekly: { lo: 80, hi: 100 } }
 };
 const SEC = {

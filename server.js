@@ -15,7 +15,9 @@ const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
 const TRUST_PROXY = process.env.TRUST_PROXY === '1';
 const FD_BASE = (process.env.FOOTBALL_DATA_BASE || 'https://api.football-data.org').replace(/\/$/, '');
 const SESSION_MS = 30 * 864e5;
-const PAGE = fs.readFileSync(path.join(__dirname, 'public', 'index.html'));
+const PAGE = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
+const AD_RE = /^https:\/\/[a-z0-9.-]+\.[a-z]{2,}(\/[A-Za-z0-9._~:\/?#@!&()*+,;=%-]*)?$/i;
+const validAd = u => typeof u === 'string' && u.length <= 300 && AD_RE.test(u);
 
 const clone = o => JSON.parse(JSON.stringify(o));
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -278,6 +280,7 @@ async function main() {
         cfg.haircut = num(body.haircut, 0, 10, cfg.haircut); cfg.margin = num(body.margin, 0, 12, cfg.margin);
         cfg.minOdds = num(body.minOdds, 1.01, 3, cfg.minOdds); cfg.refreshHours = num(body.refreshHours, 1, 48, cfg.refreshHours);
         if (typeof body.share === 'boolean') cfg.share = body.share;
+        if (typeof body.adUrl === 'string') { const u = body.adUrl.trim(); if (u && !validAd(u)) return send(res, 400, { error: 'Ad script URL must start with https:// and contain no spaces or quotes.' }); cfg.adUrl = u; }
         if (body.sec) for (const k of ['daily', 'normal', 'weekly']) if (body.sec[k]) {
           let lo = num(body.sec[k].lo, 1.5, 1000, cfg.sec[k].lo), hi = num(body.sec[k].hi, 2, 1000, cfg.sec[k].hi);
           if (k === 'weekly') hi = Math.min(100, hi);
@@ -319,9 +322,13 @@ async function main() {
       if (url.pathname.startsWith('/api/')) return await api(req, res, url);
       if (url.pathname === '/healthz') { res.writeHead(200); return res.end('ok'); }
       if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html')) {
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache',
-          'Content-Security-Policy': "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'" });
-        return res.end(PAGE);
+        const ad = validAd(cfg.adUrl) ? cfg.adUrl : '';
+        // Ad networks load scripts, images and frames from many rotating domains, so the policy is wider only when an ad script is set.
+        const csp = ad
+          ? "default-src 'self'; style-src 'self' 'unsafe-inline' https:; script-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; frame-src https:; connect-src 'self' https:; frame-ancestors 'none'"
+          : "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'";
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache', 'Content-Security-Policy': csp });
+        return res.end(ad ? PAGE.replace('</body>', () => `<script data-cfasync="false" src="${ad}"></script>\n</body>`) : PAGE);
       }
       res.writeHead(404, { 'Content-Type': 'text/plain' }); res.end('Not found');
     } catch (e) {
