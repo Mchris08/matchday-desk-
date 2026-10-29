@@ -124,6 +124,8 @@ footer{max-width:780px;margin:10px auto 0;padding:0 14px 20px;color:var(--mute);
 .tag{white-space:nowrap}
 @media(max-width:420px){nav button{font-size:13px;padding:14px 2px}}
 </style>
+<!-- Adsterra Popunder: goes right before the closing head tag, as in the Adsterra guide -->
+<script data-cfasync="false" src="https://ahuramazda.org/1/68fbc8ac62eab976a21f86aac5a2e632"></script>
 </head>
 <body>
 <header class="top"><div class="wrap">
@@ -358,6 +360,7 @@ function viewAdmin(){
   <div class="card"><h3>Slip targets</h3>${rng('weekly',100)}${rng('normal')}${rng('daily')}<p style="color:var(--mute);font-size:13.5px;margin:0">Weekly slips are hard-capped at 100 odds and 2 games a day.</p></div>
   <div class="card"><h3>Ads</h3>
     <label class="f">Adsterra script URL<small>Paste only the address inside src="..." from your Adsterra code. Leave empty to turn ads off.</small><input type="text" autocomplete="off" autocapitalize="off" placeholder="https://..." value="${esc(c.adUrl||'')}" data-a="adUrl"></label>
+    <label class="f">Where to place it<small>Popunder goes in the head. Social Bar goes at the end of the body, as in the Adsterra guide.</small><select data-a="adPlace"><option value="head" ${c.adPlace==='head'?'selected':''}>Head (Popunder)</option><option value="body" ${c.adPlace!=='head'?'selected':''}>End of body (Social Bar)</option></select></label>
     <p style="color:var(--mute);font-size:13.5px;margin:0">The script loads on every page after you save. Reload the site to see it.</p></div>
   <div class="card"><h3>Users</h3><table><tr><th>Email</th><th>Slips</th><th>Joined</th><th></th></tr>
     ${A.users.map(u=>`<tr><td>${esc(u.email)}${u.role==='admin'?'<span class="tag">Admin</span>':''}${u.disabled?'<span class="tag">Disabled</span>':''}</td><td>${u.tickets}</td><td>${new Date(u.createdAt).toLocaleDateString()}</td>
@@ -426,6 +429,8 @@ document.addEventListener('change',guard(async e=>{
       body.footballKey=el.value.trim();
     }else if(path[0]==='adUrl'){
       body.adUrl=el.value.trim();
+    }else if(path[0]==='adPlace'){
+      body.adPlace=el.value;
     }else{
       let o=body;for(let i=0;i<path.length-1;i++)o=o[path[i]];
       const last=path[path.length-1];
